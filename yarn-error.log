@@ -1,0 +1,36 @@
+Arguments: 
+  /usr/local/bin/node /usr/local/bin/yarn install
+
+PATH: 
+  /Library/Frameworks/Python.framework/Versions/3.6/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Users/funksoulninja/Library/Android/sdk
+
+Yarn version: 
+  1.2.1
+
+Node version: 
+  8.7.0
+
+Platform: 
+  darwin x64
+
+npm manifest: 
+  {
+    "main": "node_modules/expo/AppEntry.js",
+    "private": true,
+    "dependencies": {
+      "expo": "^24.0.0",
+      "react": "16.0.0",
+      "react-native": "https://github.com/expo/react-native/archive/sdk-24.0.0.tar.gz",
+      "react-native-gesture-handler": "^1.0.0-alpha.35"
+    }
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile
+
+Trace: 
+  Error: https://github.com/expo/react-native/archive/sdk-24.0.0.tar.gz: invalid literal/length code
+      at Gunzip.zlibOnError (zlib.js:152:15)
