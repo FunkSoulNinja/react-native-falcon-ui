@@ -31,7 +31,6 @@ const openConfig = {
 class MultiScreen extends Component {
     state = {
         open: false,
-        isOpening: false,
         currentScreenIndex: 0
     };
     componentWillMount() {
@@ -45,7 +44,6 @@ class MultiScreen extends Component {
         this.animated.removeAllListeners();
     }
     onPanGestureBegin() {
-        this.setState(state => ({ ...state, isOpening: true }));
         this.animated.setOffset(this.animatedValue);
     }
     onGestureEvent = e => {
@@ -89,14 +87,7 @@ class MultiScreen extends Component {
     }
     onScreenPress(screenIndex) {
         console.log('pressed: ' + screenIndex);
-        this.setState(
-            state => ({ ...state, currentScreenIndex: screenIndex }),
-            () => {
-                Animated.timing(this.animated, {
-                    ...closeConfig
-                }).start(this.setState(state => ({ ...state, open: false, isOpening: false })));
-            }
-        );
+        this.setState(state => ({ ...state, currentScreenIndex: screenIndex }), this.close);
     }
     onScrollEnd = ({ nativeEvent }) => {
         const screenWidth = nativeEvent.layoutMeasurement.width;
@@ -108,28 +99,18 @@ class MultiScreen extends Component {
         }
     };
     open = () => {
-        this.setState(
-            state => ({ ...state, isOpening: true }),
-            () => {
-                Animated.timing(this.animated, {
-                    ...openConfig
-                }).start(() => {
-                    this.setState(state => ({ ...state, open: true, isOpening: false }));
-                });
-            }
-        );
+        Animated.timing(this.animated, {
+            ...openConfig
+        }).start(() => {
+            this.setState(state => ({ ...state, open: true }));
+        });
     };
     close = () => {
-        this.setState(
-            state => ({ ...state, isOpening: true }),
-            () => {
-                Animated.timing(this.animated, {
-                    ...closeConfig
-                }).start(() => {
-                    this.setState(state => ({ ...state, open: false, isOpening: false }));
-                });
-            }
-        );
+        Animated.timing(this.animated, {
+            ...closeConfig
+        }).start(() => {
+            this.setState(state => ({ ...state, open: false }));
+        });
     };
     renderScreens() {
         if (!this.props.children) return null;
@@ -140,53 +121,33 @@ class MultiScreen extends Component {
             extrapolate: 'clamp'
         });
 
-        const opacity = this.animated.interpolate({
-            inputRange: [0, 100, 100.99, 200],
-            outputRange: [1, 0, 0, 0],
-            extrapolate: 'clamp'
-        });
-
-        // const width = this.animated.interpolate({
-        //     inputRange,
-        //     outputRange: [SCREEN_WIDTH * 0.5, SCREEN_WIDTH],
-        //     extrapolate: 'clamp'
-        // });
-
-        const wrapperStyle = {
-            // width,
-            justifyContent: 'center',
-            alignItems: 'center'
-        };
         const activeScreenStyle = {
             transform: [{ scale }]
         };
         const inactiveScreenStyle = {
-            opacity,
             transform: [{ scale: 0.5 }]
         };
 
         return _.map(this.props.children, (screen, index) => {
             const isActive = this.state.currentScreenIndex === index;
 
-            // if (!isActive && !this.state.isOpening && !this.state.open) {
+            // if (!isActive && !this.props.keepMounted && !this.state.open) {
             //     console.log('ping');
             //     return <Animated.View key={index} />;
             // }
 
             return (
-                <Animated.View key={index} style={wrapperStyle}>
-                    <Animated.View
+                <Animated.View
+                    key={index}
+                    style={[styles.screen, isActive ? activeScreenStyle : inactiveScreenStyle]}
+                >
+                    <BaseButton
+                        enabled={this.state.open ? true : false}
+                        onPress={() => this.onScreenPress(index)}
                         key={index}
-                        style={[styles.screen, isActive ? activeScreenStyle : inactiveScreenStyle]}
                     >
-                        <BaseButton
-                            enabled={this.state.open ? true : false}
-                            onPress={() => this.onScreenPress(index)}
-                            key={index}
-                        >
-                            {screen}
-                        </BaseButton>
-                    </Animated.View>
+                        {screen}
+                    </BaseButton>
                 </Animated.View>
             );
         });
@@ -201,7 +162,7 @@ class MultiScreen extends Component {
                     onHandlerStateChange={this.onHandlerStateChange}
                 >
                     <ScrollView
-                        ref={ref => (this.scrollViewRef = ref)}
+                        // ref={ref => (this.scrollViewRef = ref)}
                         scrollEnabled={this.state.open}
                         onMomentumScrollEnd={this.onScrollEnd}
                         pagingEnabled
@@ -220,7 +181,8 @@ class MultiScreen extends Component {
 }
 
 MultiScreen.defaultProps = {
-    backgroundColor: 'rgb(64, 64, 64)'
+    backgroundColor: 'rgb(64, 64, 64)',
+    keepMounted: true
 };
 
 const styles = StyleSheet.create({

@@ -20,7 +20,9 @@ export default class App extends React.Component {
                 <StatusBar barStyle="dark-content" />
                 <MultiScreen>
                     <Test style={[styles.screen, { backgroundColor: 'rgb(147, 161, 179)' }]} />
-                    <Test style={[styles.screen, { backgroundColor: 'rgb(146, 179, 153)' }]} />
+                    <Test style={[styles.screen, { backgroundColor: 'rgb(146, 179, 153)' }]}>
+                        <View style={{ backgroundColor: 'pink', width: 90, height: 90 }} />
+                    </Test>
                     <Test style={[styles.screen, { backgroundColor: 'rgb(171, 146, 179)' }]} />
                     <Test style={[styles.screen, { backgroundColor: 'rgb(179, 165, 145)' }]} />
                     <Test style={[styles.screen, { backgroundColor: 'rgb(145, 148, 179)' }]} />
