@@ -37,7 +37,7 @@ function extractProp(children, propName, index = 0) {
 class MultiScreen extends Component {
     state = {
         isMoving: false,
-        lastScreenIndex: 0,
+        lastActiveScreenIndex: 0,
         open: false,
         currentScreenIndex: 0,
         currentScreenName: extractProp(this.props.children, 'screenName'),
@@ -66,9 +66,10 @@ class MultiScreen extends Component {
         }
     }
     // componentDidUpdate(prevProps, prevState) {
-    //     const { currentScreenIndex, lastScreenIndex, open, isMoving } = this.state;
-    //     if (!isMoving && !open && lastScreenIndex !== currentScreenIndex) {
-    //         this.onScreenEnter();
+    //     const { currentScreenIndex, lastActiveScreenIndex, open, isMoving } = this.state;
+    //     if (!isMoving && !open && lastActiveScreenIndex !== currentScreenIndex && prevProps.currentScreenIndex !== currentScreenIndex) {
+    //         console.log('different screen?');
+    //         // this.onScreenEnter();
     //     }
     // }
     componentWillUnmount() {
@@ -108,9 +109,6 @@ class MultiScreen extends Component {
             this.onPanGestureEnd(nativeEvent);
         }
     };
-    onScreenPress(screenIndex) {
-        this.setState(state => ({ ...state, currentScreenIndex: screenIndex }), this.close);
-    }
     onScrollEnd = ({ nativeEvent }) => {
         const screenWidth = nativeEvent.layoutMeasurement.width;
         const offsetX = nativeEvent.contentOffset.x;
@@ -142,7 +140,7 @@ class MultiScreen extends Component {
             Animated.timing(this.animated, {
                 ...openConfig
             }).start(() => {
-                this.setState(state => ({ ...state, open: true, isMoving: false, lastScreenIndex: this.state.currentScreenIndex }), resolve);
+                this.setState(state => ({ ...state, open: true, isMoving: false, lastActiveScreenIndex: state.currentScreenIndex }), resolve);
             });
         });
     };
@@ -151,14 +149,23 @@ class MultiScreen extends Component {
             Animated.timing(this.animated, {
                 ...closeConfig
             }).start(() => {
-                this.setState(state => ({ ...state, open: false, isMoving: false }), resolve);
+                this.setState(
+                    state => ({
+                        ...state,
+                        open: false,
+                        isMoving: false
+                    }),
+                    resolve
+                );
             });
         });
     };
     get nav() {
         return {
+            isOpen: this.state.open,
             open: this.open,
             close: this.close,
+            back: () => this.scrollToPage(this.state.lastActiveScreenIndex),
             headerTitle: this.state.headerTitle,
             goToIndex: this.scrollToPage,
             go: this.scrollToScreenWithName,
@@ -190,7 +197,7 @@ class MultiScreen extends Component {
         if (!Array.isArray(this.props.children)) {
             return (
                 <Animated.View key={0} style={[styles.screen, activeScreenStyle]}>
-                    <BaseButton enabled={this.state.open ? true : false} onPress={() => this.onScreenPress(0)} key={0}>
+                    <BaseButton enabled={this.state.open ? true : false} onPress={this.close} key={0}>
                         {this.props.children}
                     </BaseButton>
                 </Animated.View>
@@ -207,7 +214,7 @@ class MultiScreen extends Component {
 
             return (
                 <Animated.View key={index} style={[styles.screen, isActive ? activeScreenStyle : inactiveScreenStyle]}>
-                    <BaseButton enabled={this.state.open ? true : false} onPress={() => this.onScreenPress(index)} key={index}>
+                    <BaseButton enabled={this.state.open ? true : false} onPress={this.close} key={index}>
                         {React.cloneElement(screen, {
                             nav: this.nav
                         })}
@@ -217,13 +224,12 @@ class MultiScreen extends Component {
         });
     }
     scrollToPage = async index => {
-        //TODO: FIX!!!!!! maybe use callbacks instead of timeouts
         if (typeof index !== 'number') return;
         const x = SCREEN_WIDTH * index;
         await this.open();
-        await new Promise(resolve => setTimeout(() => resolve(), 350));
+        await new Promise(resolve => setTimeout(() => resolve(), 100));
         this.scrollViewRef.scrollTo({ x, animated: true });
-        await new Promise(resolve => setTimeout(() => resolve(), 350));
+        await new Promise(resolve => setTimeout(() => resolve(), 400));
         // debugger;
         this.close();
     };
@@ -270,6 +276,7 @@ class MultiScreen extends Component {
     //     this.props.onScreenEnter(this.state.currentScreenName || this.state.headerTitle || this.state.currentScreenIndex);
     // }
     render() {
+        console.log(this.state.lastActiveScreenIndex, this.state.currentScreenIndex);
         return (
             <View style={styles.container}>
                 <View style={{ width: '100%', height: '100%' }}>
