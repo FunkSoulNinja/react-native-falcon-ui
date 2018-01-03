@@ -32,6 +32,7 @@ function extractProp(children, propName, index = 0) {
 
 //TODO: add ability to give shake Animation for notification
 //TODO: make it more robust! refactor code, add propTypes, use flowtypes
+//TODO: fix onOpen UI. make it play nicely with the layout
 
 class MultiScreen extends Component {
     state = {
@@ -64,12 +65,12 @@ class MultiScreen extends Component {
             this.setState(state => ({ ...state, currentScreenIndex: 0 }));
         }
     }
-    componentDidUpdate(prevProps, prevState) {
-        const { currentScreenIndex, lastScreenIndex, open } = this.state;
-        if (!open && lastScreenIndex !== currentScreenIndex) {
-            this.onScreenEnter();
-        }
-    }
+    // componentDidUpdate(prevProps, prevState) {
+    //     const { currentScreenIndex, lastScreenIndex, open, isMoving } = this.state;
+    //     if (!isMoving && !open && lastScreenIndex !== currentScreenIndex) {
+    //         this.onScreenEnter();
+    //     }
+    // }
     componentWillUnmount() {
         this.animated.removeAllListeners();
     }
@@ -126,6 +127,9 @@ class MultiScreen extends Component {
         }
     };
     scrollToScreenWithName = name => {
+        if (typeof name === 'number') {
+            return this.scrollToPage(name);
+        }
         if (!Array.isArray(this.props.children)) return;
         const screenIndex = _.findIndex(this.props.children, screen => screen.props.screenName === name);
 
@@ -138,9 +142,8 @@ class MultiScreen extends Component {
             Animated.timing(this.animated, {
                 ...openConfig
             }).start(() => {
-                this.setState(state => ({ ...state, open: true, isMoving: false, lastScreenIndex: this.state.currentScreenIndex }));
+                this.setState(state => ({ ...state, open: true, isMoving: false, lastScreenIndex: this.state.currentScreenIndex }), resolve);
             });
-            resolve();
         });
     };
     close = () => {
@@ -148,9 +151,8 @@ class MultiScreen extends Component {
             Animated.timing(this.animated, {
                 ...closeConfig
             }).start(() => {
-                this.setState(state => ({ ...state, open: false, isMoving: false }));
+                this.setState(state => ({ ...state, open: false, isMoving: false }), resolve);
             });
-            resolve();
         });
     };
     get nav() {
@@ -215,14 +217,18 @@ class MultiScreen extends Component {
         });
     }
     scrollToPage = async index => {
+        //TODO: FIX!!!!!! maybe use callbacks instead of timeouts
+        if (typeof index !== 'number') return;
         const x = SCREEN_WIDTH * index;
         await this.open();
-        await new Promise(resolve => setTimeout(() => resolve(), 300));
+        await new Promise(resolve => setTimeout(() => resolve(), 350));
         this.scrollViewRef.scrollTo({ x, animated: true });
-        await new Promise(resolve => setTimeout(() => resolve(), 300));
+        await new Promise(resolve => setTimeout(() => resolve(), 350));
+        // debugger;
         this.close();
     };
     renderUI() {
+        if (!this.props.topBar) return;
         const opacity = this.animated.interpolate({
             inputRange: [0, 100, 200],
             outputRange: [1, 0, 0]
@@ -259,10 +265,10 @@ class MultiScreen extends Component {
             ];
         }
     }
-    onScreenEnter() {
-        if (!this.props.onScreenEnter) return;
-        this.props.onScreenEnter(this.state.currentScreenName || this.state.headerTitle || this.state.currentScreenIndex);
-    }
+    // onScreenEnter() {
+    //     if (!this.props.onScreenEnter) return;
+    //     this.props.onScreenEnter(this.state.currentScreenName || this.state.headerTitle || this.state.currentScreenIndex);
+    // }
     render() {
         return (
             <View style={styles.container}>
