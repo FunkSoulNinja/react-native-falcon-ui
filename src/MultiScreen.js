@@ -184,7 +184,7 @@ class MultiScreen extends Component {
             headerTitle: this.state.headerTitle,
             goToIndex: this.scrollToPage,
             go: this.scrollToScreenWithName,
-            lastIndex: Array.isArray(this.props.children) ? this.props.children.length - 1 : 1
+            lastIndex: Array.isArray(this.props.children) ? this.props.children.length - 1 : 0
         };
     }
     renderHeader = () => {
