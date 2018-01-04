@@ -38,6 +38,7 @@ class MultiScreen extends Component {
     state = {
         isMoving: false,
         lastActiveScreenIndex: 0,
+        placeholder: null,
         open: false,
         currentScreenIndex: 0,
         currentScreenName: extractProp(this.props.children, 'screenName'),
@@ -140,7 +141,15 @@ class MultiScreen extends Component {
             Animated.timing(this.animated, {
                 ...openConfig
             }).start(() => {
-                this.setState(state => ({ ...state, open: true, isMoving: false, lastActiveScreenIndex: state.currentScreenIndex }), resolve);
+                this.setState(state => {
+                    return {
+                        ...state,
+                        open: true,
+                        isMoving: false,
+                        lastActiveScreenIndex: state.currentScreenIndex,
+                        placeholder: state.lastActiveScreenIndex
+                    };
+                }, resolve);
             });
         });
     };
@@ -149,23 +158,29 @@ class MultiScreen extends Component {
             Animated.timing(this.animated, {
                 ...closeConfig
             }).start(() => {
-                this.setState(
-                    state => ({
+                this.setState(state => {
+                    const backScreen =
+                        state.lastActiveScreenIndex === state.currentScreenIndex
+                            ? state.placeholder
+                            : state.lastActiveScreenIndex;
+                    return {
                         ...state,
                         open: false,
-                        isMoving: false
-                    }),
-                    resolve
-                );
+                        isMoving: false,
+                        lastActiveScreenIndex: backScreen,
+                        placeholder: null
+                    };
+                }, resolve);
             });
         });
     };
     get nav() {
+        const backIndex = this.state.open ? this.state.placeholder : this.state.lastActiveScreenIndex;
         return {
             isOpen: this.state.open,
             open: this.open,
             close: this.close,
-            back: () => this.scrollToPage(this.state.lastActiveScreenIndex),
+            back: () => this.scrollToPage(backIndex),
             headerTitle: this.state.headerTitle,
             goToIndex: this.scrollToPage,
             go: this.scrollToScreenWithName,
@@ -251,7 +266,6 @@ class MultiScreen extends Component {
                 opacity
             };
             const bottomBarStyle = {
-                // backgroundColor: 'blue',
                 flexDirection: 'row',
                 justifyContent: 'flex-start',
                 alignItems: 'flex-start',
@@ -276,7 +290,6 @@ class MultiScreen extends Component {
     //     this.props.onScreenEnter(this.state.currentScreenName || this.state.headerTitle || this.state.currentScreenIndex);
     // }
     render() {
-        console.log(this.state.lastActiveScreenIndex, this.state.currentScreenIndex);
         return (
             <View style={styles.container}>
                 <View style={{ width: '100%', height: '100%' }}>
